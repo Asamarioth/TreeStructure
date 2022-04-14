@@ -1,5 +1,4 @@
-﻿using MySqlConnector;
-using System.Data.Common;
+﻿using System.Data.Common;
 using TreeStructure.Models;
 
 namespace TreeStructure
@@ -11,73 +10,104 @@ namespace TreeStructure
         public TreeNodeRepository(AppDb db)
         {
             Db = db;
+            Db.Connection.Open();
         }
-        public async Task InsertOneAsync(TreeNode node)
+
+        public void InsertOne(TreeNode node)
         {
-           await node.InsertAsync();
+            using var cmd = Db.Connection.CreateCommand();
+            cmd.CommandText = @"INSERT INTO `tree` (`Name`, `ParentId`) VALUES (@name, @parentId);";
+            cmd.Parameters.AddWithValue("@name", node.Name);
+            cmd.Parameters.AddWithValue("@parentId", node.ParentId);
+            cmd.ExecuteNonQuery();
         }
-        public async Task<TreeNode?> FindOneAsync(int id)
+
+        public TreeNode? FindOne(int id)
         {
             using var cmd = Db.Connection.CreateCommand();
             cmd.CommandText = @"SELECT `Id`, `ParentId`, `Name` FROM `tree` WHERE `Id` = @id";
             cmd.Parameters.AddWithValue("@id", id);
-            var result = await ReadAllAsync(await cmd.ExecuteReaderAsync());
+            var result = ReadAll(cmd.ExecuteReader());
             return result.Count > 0 ? result[0] : null;
         }
 
-        public async Task<List<TreeNode>?> GetChildrenAsync(int parentId)
+        public TreeView GetAll()
+        {
+            using var cmd = Db.Connection.CreateCommand();
+            cmd.CommandText = @"SELECT * FROM `tree` ";
+            var result = ReadAll(cmd.ExecuteReader());
+            TreeView tree = new()
+            {
+                GetTreeView = result
+            };
+            return tree;
+        }
+
+        public List<TreeNode>? GetChildren(TreeNode node)
         {
             using var cmd = Db.Connection.CreateCommand();
             cmd.CommandText = @"SELECT `Id`, `ParentId`, `Name` FROM `tree` WHERE `ParentId` = @parentId";
-            cmd.Parameters.AddWithValue("@parentId", parentId);
-            var result = await ReadAllAsync(await cmd.ExecuteReaderAsync());
+            cmd.Parameters.AddWithValue("@parentId", node.Id);
+            var result = ReadAll(cmd.ExecuteReader());
             return result.Count > 0 ? result : null;
         }
-        public async Task RemoveNodeRecursively(int id)
+
+        public void RemoveChildren(TreeNode node)
         {
-            var children = await GetChildrenAsync(id);
+            var children = GetChildren(node);
 
             if (children is not null)
             {
                 foreach (var child in children)
                 {
-                    await RemoveNodeRecursively(child.Id);
+                    RemoveNodeRecursively(child);
+                }
+            }
+        }
+        public void RemoveNodeRecursively(TreeNode node)
+        {
+            var children = GetChildren(node);
+
+            if (children is not null)
+            {
+                foreach (var child in children)
+                {
+                    RemoveNodeRecursively(child);
                 }
             }
             using var cmd = Db.Connection.CreateCommand();
             cmd.CommandText = @"DELETE FROM `tree` WHERE `Id` = @id;";
-            cmd.Parameters.AddWithValue("@id", id);
-            await cmd.ExecuteNonQueryAsync();
+            cmd.Parameters.AddWithValue("@id", node.Id);
+            cmd.ExecuteNonQuery();
         }
-        public async Task ChangeParentAsync(int id, int? newParentId)
+
+
+        public void ChangeParent(TreeNode child, TreeNode newParent)
         {
             using var cmd = Db.Connection.CreateCommand();
-            if (newParentId.HasValue)
-            {
-                cmd.CommandText = @"UPDATE `tree` SET `ParentId` = @parentId WHERE `Id` = @id;";
-                cmd.Parameters.AddWithValue("@parentId", newParentId);
-                cmd.Parameters.AddWithValue("@id", id);
-            }
-            else
-            {
-                cmd.CommandText = @"UPDATE `tree` SET `ParentId` = NULL WHERE `Id` = @id;";
-                cmd.Parameters.AddWithValue("@id", id);
-            }
-            await cmd.ExecuteNonQueryAsync();
+            cmd.CommandText = @"UPDATE `tree` SET `ParentId` = @parentId WHERE `Id` = @id;";
+            cmd.Parameters.AddWithValue("@parentId", newParent.Id);
+            cmd.Parameters.AddWithValue("@id", child.Id);
+            cmd.ExecuteNonQuery();
+        }
 
-        }
-        public async Task UpdateNameAsync(TreeNode node)
+        public void UpdateName(TreeNode node)
         {
-            await node.UpdateNameAsync();
+            using var cmd = Db.Connection.CreateCommand();
+            cmd.CommandText = @"UPDATE `tree` SET `Name` = @name WHERE `Id` = @id;";
+            cmd.Parameters.AddWithValue("@name", node.Name);
+            cmd.Parameters.AddWithValue("@id", node.Id);
+            cmd.ExecuteNonQuery();
         }
-        public async Task<List<TreeNode>> ReadAllAsync(DbDataReader reader)
+
+        public List<TreeNode> ReadAll(DbDataReader reader)
         {
             var nodes = new List<TreeNode>();
             using (reader)
             {
-                while (await reader.ReadAsync())
+                while (reader.Read())
                 {
-                    var node = new TreeNode(Db)
+                    var node = new TreeNode()
                     {
                         Id = reader.GetInt32(0),
                         ParentId = reader.GetInt32(1),
@@ -88,8 +118,5 @@ namespace TreeStructure
             }
             return nodes;
         }
-        
-
     }
-
 }
