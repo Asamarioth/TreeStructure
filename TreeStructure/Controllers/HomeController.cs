@@ -5,40 +5,45 @@ namespace TreeStructure.Controllers
 {
     public class HomeController : Controller
     {
-        // private readonly AppDb _appDb;
         private readonly TreeNodeRepository _treeRepository;
 
         public HomeController(AppDb db)
         {
-            //_appDb = db;
             _treeRepository = new TreeNodeRepository(db);
         }
 
         public ActionResult Index()
         {
-            TreeNode node = new()
-            {
-                Id = 10
-            };
-            //MoveNode(node, new TreeNode { Id = 9});
-            return View(_treeRepository.GetAll());
+            return View();
         }
 
         [HttpGet]
-        public ActionResult<TreeView> GetTree()
+        public ActionResult<List<TreeNode>?> GetChildren(int id)
         {
             try
             {
-                return _treeRepository.GetAll();
+                return _treeRepository.GetChildren(id);
             }
             catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }
         }
+        [HttpGet]
+        public ActionResult<List<TreeNode>> GetAll()
+        {
+            try
+            {
+                return _treeRepository.GetAll().GetTreeView.ToList();
+            }
+            catch(Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
 
         [HttpPut]
-        public IActionResult InsertNode(TreeNode node)
+        public IActionResult InsertNode([FromBody]TreeNode node)
         {
             try
             {
@@ -59,19 +64,19 @@ namespace TreeStructure.Controllers
         }
 
         [HttpDelete]
-        public IActionResult DeleteNode(TreeNode node)
+        public IActionResult DeleteNode(int id)
         {
             try
             {
-                if(node.Id == 0)
+                if(id == 0)
                 {
-                    _treeRepository.RemoveChildren(node);
+                    _treeRepository.RemoveChildren(id);
                 }
-                if (_treeRepository.FindOne(node.Id) is null)
+                if (_treeRepository.FindOne(id) is null)
                 {
                     return BadRequest("Node not found");
                 }
-                _treeRepository.RemoveNodeRecursively(node);
+                _treeRepository.RemoveNodeRecursively(id);
                 return Ok("Node has been deleted");
             }
             catch (Exception ex)
@@ -80,44 +85,25 @@ namespace TreeStructure.Controllers
             }
         }
 
-        [HttpPatch]
-        public IActionResult MoveNode(TreeNode child, TreeNode? newParent)
-        {
-            try
-            {
-                if (_treeRepository.FindOne(child.Id) is null)
-                {
-                    return BadRequest("Node does not exist");
-                }
-                if (newParent is null)
-                {
-                    _treeRepository.ChangeParent(child, new TreeNode { Id = 0 });
-                    return Ok();
-                }
-                if (_treeRepository.FindOne(newParent.Id) is null)
-                {
-                    return BadRequest("Parent does not exist");
-                }
-
-                _treeRepository.ChangeParent(child, newParent);
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }
 
         [HttpPatch]
-        public IActionResult UpdateNode(TreeNode node)
+        public IActionResult UpdateNode([FromBody]TreeNode node)
         {
+            Console.WriteLine(node);
             try
             {
                 if (_treeRepository.FindOne(node.Id) is null)
                 {
                     return BadRequest("Node does not exist");
                 }
-                _treeRepository.UpdateName(node);
+                if (node.ParentId != 0)
+                {
+                    if (_treeRepository.FindOne(node.ParentId) is null)
+                    {
+                        return BadRequest("Parent does not exist");
+                    }
+                }
+                _treeRepository.UpdateNode(node);
                 return Ok();
             }
             catch (Exception ex)

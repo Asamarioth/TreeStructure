@@ -34,7 +34,7 @@ namespace TreeStructure
         public TreeView GetAll()
         {
             using var cmd = Db.Connection.CreateCommand();
-            cmd.CommandText = @"SELECT * FROM `tree` ";
+            cmd.CommandText = @"SELECT * FROM `tree` ORDER BY `ParentId`";
             var result = ReadAll(cmd.ExecuteReader());
             TreeView tree = new()
             {
@@ -43,59 +43,50 @@ namespace TreeStructure
             return tree;
         }
 
-        public List<TreeNode>? GetChildren(TreeNode node)
+        public List<TreeNode>? GetChildren(int id)
         {
             using var cmd = Db.Connection.CreateCommand();
             cmd.CommandText = @"SELECT `Id`, `ParentId`, `Name` FROM `tree` WHERE `ParentId` = @parentId";
-            cmd.Parameters.AddWithValue("@parentId", node.Id);
+            cmd.Parameters.AddWithValue("@parentId", id);
             var result = ReadAll(cmd.ExecuteReader());
             return result.Count > 0 ? result : null;
         }
 
-        public void RemoveChildren(TreeNode node)
+        public void RemoveChildren(int id)
         {
-            var children = GetChildren(node);
+            var children = GetChildren(id);
 
             if (children is not null)
             {
                 foreach (var child in children)
                 {
-                    RemoveNodeRecursively(child);
+                    RemoveNodeRecursively(child.Id);
                 }
             }
         }
-        public void RemoveNodeRecursively(TreeNode node)
+        public void RemoveNodeRecursively(int id)
         {
-            var children = GetChildren(node);
+            var children = GetChildren(id);
 
             if (children is not null)
             {
                 foreach (var child in children)
                 {
-                    RemoveNodeRecursively(child);
+                    RemoveNodeRecursively(child.Id);
                 }
             }
             using var cmd = Db.Connection.CreateCommand();
             cmd.CommandText = @"DELETE FROM `tree` WHERE `Id` = @id;";
-            cmd.Parameters.AddWithValue("@id", node.Id);
+            cmd.Parameters.AddWithValue("@id", id);
             cmd.ExecuteNonQuery();
         }
 
-
-        public void ChangeParent(TreeNode child, TreeNode newParent)
+        public void UpdateNode(TreeNode node)
         {
             using var cmd = Db.Connection.CreateCommand();
-            cmd.CommandText = @"UPDATE `tree` SET `ParentId` = @parentId WHERE `Id` = @id;";
-            cmd.Parameters.AddWithValue("@parentId", newParent.Id);
-            cmd.Parameters.AddWithValue("@id", child.Id);
-            cmd.ExecuteNonQuery();
-        }
-
-        public void UpdateName(TreeNode node)
-        {
-            using var cmd = Db.Connection.CreateCommand();
-            cmd.CommandText = @"UPDATE `tree` SET `Name` = @name WHERE `Id` = @id;";
+            cmd.CommandText = @"UPDATE `tree` SET `Name` = @name, `ParentId` = @parentId WHERE `Id` = @id;";
             cmd.Parameters.AddWithValue("@name", node.Name);
+            cmd.Parameters.AddWithValue("@parentId", node.ParentId);
             cmd.Parameters.AddWithValue("@id", node.Id);
             cmd.ExecuteNonQuery();
         }
