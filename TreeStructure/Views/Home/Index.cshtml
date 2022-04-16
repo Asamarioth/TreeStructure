@@ -4,28 +4,11 @@
 }
 
 
-<div id="app">{{ message }}</div>
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-        @{
-        @if (Model.GetTreeView is not null)
-        {
-            @foreach (var i in Model.GetTreeView)
-            {
-                <div>
-                    <h1>@i.Name @i.Id @i.ParentId</h1>
-                </div>
-            }
-        }
-        }
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div id="app">
 </div>
-<script>
-  Vue.createApp({
-    data() {
-      return {
-        message: 'Hello Vue!'
-      }
-    }
-  }).mount('#app')
+<script type="module">
+import MyComponent from "./js/site.js"
+  Vue.createApp(
+      MyComponent
+  ).mount('#app')
 </script>
