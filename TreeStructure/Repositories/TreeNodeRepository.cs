@@ -31,16 +31,13 @@ namespace TreeStructure
             return result.Count > 0 ? result[0] : null;
         }
 
-        public TreeView GetAll()
+        public List<TreeNode> GetAll()
         {
             using var cmd = Db.Connection.CreateCommand();
             cmd.CommandText = @"SELECT * FROM `tree` ORDER BY `ParentId`";
             var result = ReadAll(cmd.ExecuteReader());
-            TreeView tree = new()
-            {
-                GetTreeView = result
-            };
-            return tree;
+
+            return result;
         }
 
         public List<TreeNode>? GetChildren(int id)

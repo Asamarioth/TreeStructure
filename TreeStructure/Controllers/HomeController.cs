@@ -34,7 +34,7 @@ namespace TreeStructure.Controllers
         {
             try
             {
-                return _treeRepository.GetAll().GetTreeView.ToList();
+                return _treeRepository.GetAll();
             }
             catch(Exception ex)
             {
