@@ -71,6 +71,7 @@ namespace TreeStructure.Controllers
                 if(id == 0)
                 {
                     _treeRepository.RemoveChildren(id);
+                    return Ok("Tree cleared");
                 }
                 if (_treeRepository.FindOne(id) is null)
                 {
