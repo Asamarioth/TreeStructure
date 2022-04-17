@@ -5,12 +5,16 @@
     },
     data() {
         return {
-            isOpen:false
+            isOpen:false,
+            sortDirection:1
         }
     },
     computed: {
         isFolder() {
             return this.model.children
+        },
+        hasChildren() {
+            return this.model.children && this.model.children.length > 0
         }
     },
     methods: {
@@ -33,23 +37,36 @@
         },
         editNodeC(model){
             this.$emit('editNode', model)
+        },
+        sortC(id,sortDirection) {
+            this.$emit('sort', id, sortDirection)
+        },
+        sort() {
+            this.$emit('sort', this.model.id, this.sortDirection)
+
+            this.sortDirection = this.sortDirection * -1
         }
+        
     },
     template: 
         `
-        <li>
+        <li class="list-item">
             <div>
                 <span
                 @click="toggle"
-                @dblclick="changeType">
+                @dblclick="changeType"
+                class="node-name"
+                :class="{'txt-bold': hasChildren}">
                 {{model.name}}
                 </span>
-                <button v-if=" model.id !=0" @click="$emit('removeNode',model.id)" class="remove-btn">Usuń</button>
-                <button v-if=" model.id !=0" @click="$emit('editNode',model)" class="remove-btn">Edytuj</button>
+                <button v-if=" model.id == 0 && hasChildren" @click="$emit('removeNode',model.id)" class="btn btn-danger btn-list">Usuń drzewo</button>
+                <button v-if=" model.id !=0" @click="$emit('removeNode',model.id)" class="btn btn-danger btn-list">Usuń</button>
+                <button v-if=" model.id !=0" @click="$emit('editNode',model)" class="btn btn-warning btn-list" >Edytuj</button>
+                <button v-if="hasChildren" @click="sort" class="btn btn-info btn-list">Sortuj</button>
             </div>
             <ul v-show="isOpen" v-if="isFolder">
-                <TreeItem v-for="model in model.children" :model="model" @addNode="addNodeC" @removeNode="removeNodeC" @editNode="editNodeC"> </TreeItem>
-            <li @click="$emit('addNode',model.id, model.name)">+</li>
+                <TreeItem v-for="model in model.children" :model="model" @addNode="addNodeC" @removeNode="removeNodeC" @editNode="editNodeC" @sort="sortC"> </TreeItem>
+            <li @click="$emit('addNode',model.id, model.name)" class="add-li">+</li>
             </ul>
 </li>
         `

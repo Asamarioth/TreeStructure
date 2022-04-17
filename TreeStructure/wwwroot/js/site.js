@@ -27,7 +27,7 @@ export default {
     },
     template: `
          <ul>
-            <TreeItem :model="this.nodes" v-if="!loading" @addNode="addNodeClick" @removeNode="removeNodeClick" @editNode="editNodeClick"></TreeItem >
+            <TreeItem :model="this.nodes" v-if="!loading" @addNode="addNodeClick" @removeNode="removeNodeClick" @editNode="editNodeClick" @sort="sortNode"></TreeItem >
             <h2 v-else>Loading</h2>
         </ul >
         <br />
@@ -58,7 +58,9 @@ export default {
         <h3>Edytuj węzeł</h3>
         </template>
         <template v-slot:body>
+        Nazwa węzła:
         <input v-model="this.currentBranch.name">
+        Gałąź:
         <select v-model="this.currentBranch.parentId">
             <option value=0>Main</option>
             <option v-for="node in this.treeData" :value="node.id">{{node.name}}</option>
@@ -98,6 +100,15 @@ export default {
             return roots;
         },
         async addNode() {
+            if(!this.searchTree(this.nodes, this.currentBranch.id)){
+                alert("Złe id rodzica")
+                return
+            }
+            if(!this.newNodeName || this.newNodeName.length == 0){
+                alert("Nazwa węzła nie może być pusta")
+                return            
+            }
+
             const data = {
                 ParentId: this.currentBranch.id,
                 Name: this.newNodeName
@@ -112,9 +123,15 @@ export default {
             this.closeModal()
             this.getAllData();
         },
-        async removeNode(){
-            console.log(this.currentBranch.id)
-            const res = await fetch("/Home/DeleteNode?id="+ this.currentBranch.id, {
+        async removeNode() {
+
+            if(!this.searchTree(this.nodes, this.currentBranch.id)){
+                alert("Węzeł nie istnieje")
+                this.closeModal()
+                return
+            }
+
+            const res = await fetch("/Home/DeleteNode?id=" + this.currentBranch.id, {
                 method: "delete",
                 headers: {
                     "Content-Type": "application/json"
@@ -123,7 +140,30 @@ export default {
             this.closeModal()
             this.getAllData();
         },
-        async editNode(){
+        async editNode() {
+            let node = this.searchTree(this.nodes, this.currentBranch.id)
+            let parent = this.searchTree(this.nodes, this.currentBranch.parentId)
+            if(!node){
+                alert("Węzeł nie istnieje")
+                this.closeModal()
+                return
+            }
+            if(!this.currentBranch.name || this.currentBranch.name.trim().length == 0){
+                alert("Nazwa węzła nie może być pusta")
+                return
+            }
+            if(!parent){
+                alert("Rodzic nie istnieje")
+                return
+            }
+            if(this.currentBranch.id == this.currentBranch.parentId){
+                alert("Nie można przenieść węzła do samego siebie")
+                return
+            }
+            if(this.searchTree(node,this.currentBranch.parentId)){
+                alert("Nie można przenieść węzła do jego dziecka")
+                return
+            }
             const data = {
                 Id: this.currentBranch.id,
                 Name: this.currentBranch.name,
@@ -142,7 +182,7 @@ export default {
         addNodeClick(id, parentName) {
             this.currentBranch.id = id;
             this.currentBranch.name = parentName;
-            this.showModalAdd = true;  
+            this.showModalAdd = true;
         },
         removeNodeClick(id) {
             this.currentBranch.id = id;
@@ -154,7 +194,16 @@ export default {
             this.currentBranch.parentId = model.parentId;
             this.showModalEdit = true;
         },
-        closeModal(){
+        sortNode(id, direction) {
+        this.searchTree(this.nodes, id).children.sort((a, b) =>
+         {
+             if(a.name < b.name) return -1 * direction;
+            if(a.name > b.name) return 1 * direction;
+            return 0;
+         }
+         );
+        },
+        closeModal() {
             this.showModalAdd = false;
             this.showModalRemove = false;
             this.showModalEdit = false;
@@ -165,6 +214,17 @@ export default {
             }
             this.newNodeName = "";
 
+        },
+        searchTree(node, id) {
+            if (node.id == id) {
+                return node;
+            }
+            else {
+                for (var i = 0; i < node.children.length; i++) {
+                    var result = this.searchTree(node.children[i], id);
+                    if (result) return result;
+                }
+            }
         }
 
     },
