@@ -50,7 +50,7 @@
     },
     template: 
         `
-        <li class="list-item">
+        <li class="list-group-item">
             <div>
                 <span
                 @click="toggle"
@@ -64,9 +64,9 @@
                 <button v-if=" model.id !=0" @click="$emit('editNode',model)" class="btn btn-warning btn-list" >Edytuj</button>
                 <button v-if="hasChildren" @click="sort" class="btn btn-info btn-list">Sortuj</button>
             </div>
-            <ul v-show="isOpen" v-if="isFolder">
+            <ul v-show="isOpen" v-if="isFolder" class="list-group">
                 <TreeItem v-for="model in model.children" :model="model" @addNode="addNodeC" @removeNode="removeNodeC" @editNode="editNodeC" @sort="sortC"> </TreeItem>
-            <li @click="$emit('addNode',model.id, model.name)" class="add-li">+</li>
+            <li @click="$emit('addNode',model.id, model.name)" class="add-li list-group-item">+</li>
             </ul>
 </li>
         `

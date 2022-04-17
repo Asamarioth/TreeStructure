@@ -26,7 +26,7 @@ export default {
         }
     },
     template: `
-         <ul>
+         <ul class="list-group">
             <TreeItem :model="this.nodes" v-if="!loading" @addNode="addNodeClick" @removeNode="removeNodeClick" @editNode="editNodeClick" @sort="sortNode"></TreeItem >
             <h2 v-else>Loading</h2>
         </ul >
@@ -100,13 +100,13 @@ export default {
             return roots;
         },
         async addNode() {
-            if(!this.searchTree(this.nodes, this.currentBranch.id)){
+            if (!this.searchTree(this.nodes, this.currentBranch.id)) {
                 alert("Złe id rodzica")
                 return
             }
-            if(!this.newNodeName || this.newNodeName.length == 0){
+            if (!this.newNodeName || this.newNodeName.length == 0) {
                 alert("Nazwa węzła nie może być pusta")
-                return            
+                return
             }
 
             const data = {
@@ -125,7 +125,7 @@ export default {
         },
         async removeNode() {
 
-            if(!this.searchTree(this.nodes, this.currentBranch.id)){
+            if (!this.searchTree(this.nodes, this.currentBranch.id)) {
                 alert("Węzeł nie istnieje")
                 this.closeModal()
                 return
@@ -143,24 +143,24 @@ export default {
         async editNode() {
             let node = this.searchTree(this.nodes, this.currentBranch.id)
             let parent = this.searchTree(this.nodes, this.currentBranch.parentId)
-            if(!node){
+            if (!node) {
                 alert("Węzeł nie istnieje")
                 this.closeModal()
                 return
             }
-            if(!this.currentBranch.name || this.currentBranch.name.trim().length == 0){
+            if (!this.currentBranch.name || this.currentBranch.name.trim().length == 0) {
                 alert("Nazwa węzła nie może być pusta")
                 return
             }
-            if(!parent){
+            if (!parent) {
                 alert("Rodzic nie istnieje")
                 return
             }
-            if(this.currentBranch.id == this.currentBranch.parentId){
+            if (this.currentBranch.id == this.currentBranch.parentId) {
                 alert("Nie można przenieść węzła do samego siebie")
                 return
             }
-            if(this.searchTree(node,this.currentBranch.parentId)){
+            if (this.searchTree(node, this.currentBranch.parentId)) {
                 alert("Nie można przenieść węzła do jego dziecka")
                 return
             }
@@ -195,13 +195,11 @@ export default {
             this.showModalEdit = true;
         },
         sortNode(id, direction) {
-        this.searchTree(this.nodes, id).children.sort((a, b) =>
-         {
-             if(a.name < b.name) return -1 * direction;
-            if(a.name > b.name) return 1 * direction;
-            return 0;
-         }
-         );
+            this.searchTree(this.nodes, id).children.sort((a, b) => {
+                if (a.name < b.name) return -1 * direction;
+                if (a.name > b.name) return 1 * direction;
+                return 0;
+            });
         },
         closeModal() {
             this.showModalAdd = false;
@@ -218,8 +216,7 @@ export default {
         searchTree(node, id) {
             if (node.id == id) {
                 return node;
-            }
-            else {
+            } else {
                 for (var i = 0; i < node.children.length; i++) {
                     var result = this.searchTree(node.children[i], id);
                     if (result) return result;
