@@ -59,10 +59,10 @@
                 :class="{'txt-bold': hasChildren}">
                 {{model.name}}
                 </span>
-                <button v-if=" model.id == 0 && hasChildren" @click="$emit('removeNode',model.id)" class="btn btn-danger btn-list">Usuń drzewo</button>
-                <button v-if=" model.id !=0" @click="$emit('removeNode',model.id)" class="btn btn-danger btn-list">Usuń</button>
-                <button v-if=" model.id !=0" @click="$emit('editNode',model)" class="btn btn-warning btn-list" >Edytuj</button>
-                <button v-if="hasChildren" @click="sort" class="btn btn-info btn-list">Sortuj</button>
+                <button v-if=" model.id == 0 && hasChildren" @click="$emit('removeNode',model.id)" class="btn btn-danger btn-list btn-sm">Usuń drzewo</button>
+                <button v-if=" model.id !=0" @click="$emit('removeNode',model.id)" class="btn btn-danger btn-list btn-sm">Usuń</button>
+                <button v-if=" model.id !=0" @click="$emit('editNode',model)" class="btn btn-warning btn-list btn-sm" >Edytuj</button>
+                <button v-if="hasChildren" @click="sort" class="btn btn-info btn-list btn-sm">Sortuj</button>
             </div>
             <ul v-show="isOpen" v-if="isFolder" class="list-group">
                 <TreeItem v-for="model in model.children" :model="model" @addNode="addNodeC" @removeNode="removeNodeC" @editNode="editNodeC" @sort="sortC"> </TreeItem>
